@@ -15,10 +15,6 @@ from undo_manager import UndoManager
 from folder_monitor import FolderMonitor
 
 
-ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
-
-
 class FileOrganizerApp(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -32,52 +28,146 @@ class FileOrganizerApp(ctk.CTk):
         self.monitor = None
         self.monitoring = False
         self._buttons = []
+        self.is_dark = True
 
         self._setup_ui()
 
     def _setup_ui(self):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
-
         self._create_main_content()
 
-    def _create_main_content(self):
-        container = ctk.CTkFrame(self, fg_color="#1a1a1a")
-        container.grid(row=0, column=0, sticky="nsew", padx=12, pady=12)
-        container.grid_columnconfigure(0, weight=3)
-        container.grid_columnconfigure(1, weight=1)
-        container.grid_rowconfigure(0, weight=1)
+    def toggle_theme(self):
+        self.is_dark = not self.is_dark
+        mode = "dark" if self.is_dark else "light"
+        ctk.set_appearance_mode(mode)
+        self._update_colors()
+        self.theme_btn.configure(text="🌙 Dark" if self.is_dark else "☀️ Light")
 
-        self._create_file_area(container)
-        self._create_sidebar(container)
+    def _update_colors(self):
+        if self.is_dark:
+            bg = "#1a1a1a"
+            card = "#222222"
+            inner = "#1a1a1a"
+            text = "#e0e0e0"
+            text_dim = "#888888"
+            text_muted = "#666666"
+            border = "#333333"
+        else:
+            bg = "#f5f5f5"
+            card = "#ffffff"
+            inner = "#f0f0f0"
+            text = "#1a1a1a"
+            text_dim = "#555555"
+            text_muted = "#888888"
+            border = "#dddddd"
+
+        self.container.configure(fg_color=bg)
+        self.file_frame.configure(fg_color=card)
+        self.sidebar_frame.configure(fg_color=card)
+        self.list_frame.configure(fg_color=inner)
+        self.toolbar.configure(fg_color="transparent")
+        self.search_frame.configure(fg_color=inner)
+        self.folder_frame.configure(fg_color=inner)
+        self.actions_frame.configure(fg_color="transparent")
+        self.opts_frame.configure(fg_color=inner)
+        self.stats_frame.configure(fg_color=inner)
+        self.status_label.configure(text_color=text_muted)
+        self.file_count_label.configure(text_color=text_muted)
+        self.folder_display.configure(text_color=text_dim, fg_color=inner)
+        self.stats_text.configure(fg_color=inner)
+
+        style = ttk.Style()
+        if self.is_dark:
+            style.configure(
+                "Custom.Treeview",
+                background="#2a2a2a",
+                foreground="#e0e0e0",
+                fieldbackground="#2a2a2a",
+            )
+            style.configure(
+                "Custom.Treeview.Heading", background=card, foreground=text_dim
+            )
+        else:
+            style.configure(
+                "Custom.Treeview",
+                background="#ffffff",
+                foreground="#1a1a1a",
+                fieldbackground="#ffffff",
+            )
+            style.configure(
+                "Custom.Treeview.Heading", background=card, foreground=text_dim
+            )
+
+    def _create_main_content(self):
+        self.container = ctk.CTkFrame(self, fg_color="#1a1a1a")
+        self.container.grid(row=0, column=0, sticky="nsew", padx=12, pady=12)
+        self.container.grid_columnconfigure(0, weight=3)
+        self.container.grid_columnconfigure(1, weight=1)
+        self.container.grid_rowconfigure(0, weight=1)
+
+        self._create_file_area(self.container)
+        self._create_sidebar(self.container)
 
     def _create_file_area(self, parent):
-        file_frame = ctk.CTkFrame(parent, fg_color="#222222", corner_radius=12)
-        file_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
-        file_frame.grid_columnconfigure(0, weight=1)
-        file_frame.grid_rowconfigure(1, weight=1)
+        self.file_frame = ctk.CTkFrame(
+            parent,
+            fg_color="#222222",
+            corner_radius=12,
+            border_width=1,
+            border_color="#333333",
+        )
+        self.file_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        self.file_frame.grid_columnconfigure(0, weight=1)
+        self.file_frame.grid_rowconfigure(1, weight=1)
 
         # Toolbar
-        toolbar = ctk.CTkFrame(file_frame, fg_color="transparent")
-        toolbar.grid(row=0, column=0, sticky="ew", padx=12, pady=10)
-        toolbar.grid_columnconfigure(0, weight=1)
+        self.toolbar = ctk.CTkFrame(self.file_frame, fg_color="transparent")
+        self.toolbar.grid(row=0, column=0, sticky="ew", padx=12, pady=10)
+        self.toolbar.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(toolbar, text="🔍", font=ctk.CTkFont(size=14)).grid(
-            row=0, column=0, padx=(0, 10)
+        # Theme toggle
+        self.theme_btn = ctk.CTkButton(
+            self.toolbar,
+            text="🌙 Dark",
+            command=self.toggle_theme,
+            width=90,
+            height=32,
+            corner_radius=8,
+            font=ctk.CTkFont(size=11),
+            fg_color="#333333",
+            hover_color="#444444",
+        )
+        self.theme_btn.grid(row=0, column=0, sticky="w")
+
+        self.search_frame = ctk.CTkFrame(
+            self.toolbar,
+            fg_color="#1a1a1a",
+            corner_radius=8,
+            border_width=1,
+            border_color="#444444",
+        )
+        self.search_frame.grid(row=0, column=1, sticky="ew", padx=10)
+        self.search_frame.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(self.search_frame, text="🔍", font=ctk.CTkFont(size=14)).grid(
+            row=0, column=0, padx=(10, 0), sticky="e"
         )
         self.search_var = ctk.StringVar()
         self.search_var.trace("w", self.filter_files)
         ctk.CTkEntry(
-            toolbar,
+            self.search_frame,
             placeholder_text="Search files...",
             textvariable=self.search_var,
-            height=36,
+            height=34,
             corner_radius=8,
             border_width=0,
-            font=ctk.CTkFont(size=12),
-        ).grid(row=0, column=1, sticky="ew", padx=6)
+            fg_color="transparent",
+            font=ctk.CTkFont(size=11),
+        ).grid(row=0, column=1, sticky="ew", padx=8, pady=4)
+
         self.filter_mode = ctk.CTkComboBox(
-            toolbar,
+            self.toolbar,
             values=[
                 "All",
                 "Images",
@@ -89,7 +179,7 @@ class FileOrganizerApp(ctk.CTk):
                 "Others",
             ],
             command=self.filter_files,
-            height=36,
+            height=34,
             corner_radius=8,
             width=120,
             font=ctk.CTkFont(size=11),
@@ -98,10 +188,16 @@ class FileOrganizerApp(ctk.CTk):
         self.filter_mode.grid(row=0, column=2, padx=10)
 
         # File list
-        list_frame = ctk.CTkFrame(file_frame, fg_color="#1a1a1a", corner_radius=8)
-        list_frame.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
-        list_frame.grid_columnconfigure(0, weight=1)
-        list_frame.grid_rowconfigure(0, weight=1)
+        self.list_frame = ctk.CTkFrame(
+            self.file_frame,
+            fg_color="#1a1a1a",
+            corner_radius=8,
+            border_width=1,
+            border_color="#444444",
+        )
+        self.list_frame.grid(row=1, column=0, sticky="nsew", padx=12, pady=(0, 12))
+        self.list_frame.grid_columnconfigure(0, weight=1)
+        self.list_frame.grid_rowconfigure(0, weight=1)
 
         style = ttk.Style()
         style.theme_use("clam")
@@ -110,7 +206,7 @@ class FileOrganizerApp(ctk.CTk):
             background="#2a2a2a",
             foreground="#e0e0e0",
             fieldbackground="#2a2a2a",
-            borderwidth=0,
+            borderwidth=1,
             rowheight=36,
             font=("Segoe UI", 11),
         )
@@ -118,7 +214,7 @@ class FileOrganizerApp(ctk.CTk):
             "Custom.Treeview.Heading",
             background="#222222",
             foreground="#888888",
-            borderwidth=0,
+            borderwidth=1,
             font=("Segoe UI", 11, "bold"),
         )
         style.map(
@@ -128,7 +224,7 @@ class FileOrganizerApp(ctk.CTk):
         )
 
         self.file_tree = ttk.Treeview(
-            list_frame,
+            self.list_frame,
             columns=("name", "size"),
             show="headings",
             style="Custom.Treeview",
@@ -140,64 +236,80 @@ class FileOrganizerApp(ctk.CTk):
         self.file_tree.column("size", width=100, minwidth=80, stretch=False)
 
         sb = ctk.CTkScrollbar(
-            list_frame, command=self.file_tree.yview, width=8, corner_radius=4
+            self.list_frame, command=self.file_tree.yview, width=8, corner_radius=4
         )
         self.file_tree.configure(yscrollcommand=sb.set)
         self.file_tree.grid(row=0, column=0, sticky="nsew", padx=4, pady=4)
         sb.grid(row=0, column=1, sticky="ns", pady=4)
 
         self.file_count_label = ctk.CTkLabel(
-            list_frame, text="0 files", font=ctk.CTkFont(size=11), text_color="#666"
+            self.list_frame,
+            text="0 files",
+            font=ctk.CTkFont(size=11),
+            text_color="#666",
         )
         self.file_count_label.grid(row=1, column=0, sticky="w", pady=(6, 0))
 
         self.filtered_files = []
 
     def _create_sidebar(self, parent):
-        sidebar = ctk.CTkFrame(parent, fg_color="#222222", corner_radius=12)
-        sidebar.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
-        sidebar.grid_columnconfigure(0, weight=1)
-        sidebar.grid_rowconfigure(0, weight=0)
-        sidebar.grid_rowconfigure(1, weight=0)
-        sidebar.grid_rowconfigure(2, weight=0)
-        sidebar.grid_rowconfigure(3, weight=0)
-        sidebar.grid_rowconfigure(4, weight=1)
+        self.sidebar_frame = ctk.CTkFrame(
+            parent,
+            fg_color="#222222",
+            corner_radius=12,
+            border_width=1,
+            border_color="#333333",
+        )
+        self.sidebar_frame.grid(row=0, column=1, sticky="nsew", padx=(10, 0))
+        self.sidebar_frame.grid_columnconfigure(0, weight=1)
 
         # Header
+        header = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
+        header.grid(row=0, column=0, padx=14, pady=(12, 10), sticky="ew")
+        header.grid_columnconfigure(0, weight=1)
         ctk.CTkLabel(
-            sidebar, text="📁 File Organizer", font=ctk.CTkFont(size=16, weight="bold")
-        ).grid(row=0, column=0, padx=14, pady=(12, 10), sticky="w")
+            header, text="📁 File Organizer", font=ctk.CTkFont(size=16, weight="bold")
+        ).grid(row=0, column=0, sticky="w")
 
         # Folder
-        folder_frame = ctk.CTkFrame(sidebar, fg_color="#1a1a1a", corner_radius=10)
-        folder_frame.grid(row=1, column=0, padx=12, pady=(0, 10), sticky="ew")
-        folder_frame.grid_columnconfigure(0, weight=1)
+        self.folder_frame = ctk.CTkFrame(
+            self.sidebar_frame,
+            fg_color="#1a1a1a",
+            corner_radius=10,
+            border_width=1,
+            border_color="#333333",
+        )
+        self.folder_frame.grid(row=1, column=0, padx=12, pady=(0, 10), sticky="ew")
+        self.folder_frame.grid_columnconfigure(0, weight=1)
         self.folder_display = ctk.CTkLabel(
-            folder_frame,
+            self.folder_frame,
             text="No folder selected",
             font=ctk.CTkFont(size=11),
             text_color="#888",
             wraplength=160,
             height=36,
             anchor="w",
+            fg_color="#1a1a1a",
         )
         self.folder_display.grid(row=0, column=0, padx=10, pady=8, sticky="ew")
         self.folder_display.configure(anchor="w", padx=10)
         ctk.CTkButton(
-            folder_frame,
+            self.folder_frame,
             text="Select Folder",
             command=self.select_folder,
             height=36,
             corner_radius=8,
             font=ctk.CTkFont(size=12, weight="bold"),
             fg_color="#4A90E2",
+            hover_color="#357ABD",
+            border_width=0,
         ).grid(row=1, column=0, padx=10, pady=(0, 8), sticky="ew")
 
         # Actions - 2 column grid
-        actions_frame = ctk.CTkFrame(sidebar, fg_color="transparent")
-        actions_frame.grid(row=2, column=0, padx=12, pady=(0, 10), sticky="ew")
-        actions_frame.grid_columnconfigure(0, weight=1)
-        actions_frame.grid_columnconfigure(1, weight=1)
+        self.actions_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="transparent")
+        self.actions_frame.grid(row=2, column=0, padx=12, pady=(0, 10), sticky="ew")
+        self.actions_frame.grid_columnconfigure(0, weight=1)
+        self.actions_frame.grid_columnconfigure(1, weight=1)
 
         btns = [
             ("🔍 Scan", self.scan_files, "#4A90E2", 0, 0),
@@ -208,13 +320,15 @@ class FileOrganizerApp(ctk.CTk):
         ]
         for text, cmd, fg, row, col in btns:
             b = ctk.CTkButton(
-                actions_frame,
+                self.actions_frame,
                 text=text,
                 command=cmd,
                 height=36,
                 corner_radius=8,
                 font=ctk.CTkFont(size=11, weight="bold"),
                 fg_color=fg,
+                hover_color=self._darken(fg),
+                border_width=0,
             )
             b.grid(row=row, column=col, padx=3, pady=3, sticky="ew")
             if text == "🔍 Scan":
@@ -227,48 +341,64 @@ class FileOrganizerApp(ctk.CTk):
                 self.duplicate_btn = b
 
         # Options
-        opts_frame = ctk.CTkFrame(sidebar, fg_color="#1a1a1a", corner_radius=10)
-        opts_frame.grid(row=3, column=0, padx=12, pady=(0, 10), sticky="ew")
-        opts_frame.grid_columnconfigure(0, weight=1)
+        self.opts_frame = ctk.CTkFrame(
+            self.sidebar_frame,
+            fg_color="#1a1a1a",
+            corner_radius=10,
+            border_width=1,
+            border_color="#333333",
+        )
+        self.opts_frame.grid(row=3, column=0, padx=12, pady=(0, 10), sticky="ew")
+        self.opts_frame.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(
-            opts_frame, text="Organize Mode:", font=ctk.CTkFont(size=11, weight="bold")
+            self.opts_frame,
+            text="Organize Mode:",
+            font=ctk.CTkFont(size=11, weight="bold"),
         ).grid(row=0, column=0, padx=10, pady=(10, 6), sticky="w")
         self.organize_mode = ctk.CTkSegmentedButton(
-            opts_frame,
+            self.opts_frame,
             values=["Category", "Date", "Extension"],
             command=self.set_organize_mode,
-            height=36,
+            height=34,
             font=ctk.CTkFont(size=11),
         )
         self.organize_mode.set("Category")
         self.organize_mode.grid(row=1, column=0, padx=10, pady=(0, 8), sticky="ew")
         self.dry_run_var = ctk.BooleanVar(value=True)
         ctk.CTkCheckBox(
-            opts_frame,
+            self.opts_frame,
             text="Preview Mode (Dry Run)",
             variable=self.dry_run_var,
             font=ctk.CTkFont(size=11),
         ).grid(row=2, column=0, padx=10, pady=4, sticky="w")
         self.recursive_var = ctk.BooleanVar(value=False)
         ctk.CTkCheckBox(
-            opts_frame,
+            self.opts_frame,
             text="Include Subfolders",
             variable=self.recursive_var,
             font=ctk.CTkFont(size=11),
         ).grid(row=3, column=0, padx=10, pady=(4, 10), sticky="w")
 
         # Stats & Monitor
-        stats_frame = ctk.CTkFrame(sidebar, fg_color="#1a1a1a", corner_radius=10)
-        stats_frame.grid(row=4, column=0, padx=12, pady=(0, 12), sticky="nsew")
-        stats_frame.grid_columnconfigure(0, weight=1)
-        stats_frame.grid_rowconfigure(1, weight=1)
+        self.stats_frame = ctk.CTkFrame(
+            self.sidebar_frame,
+            fg_color="#1a1a1a",
+            corner_radius=10,
+            border_width=1,
+            border_color="#333333",
+        )
+        self.stats_frame.grid(row=4, column=0, padx=12, pady=(0, 12), sticky="nsew")
+        self.stats_frame.grid_columnconfigure(0, weight=1)
+        self.stats_frame.grid_rowconfigure(1, weight=1)
 
         ctk.CTkLabel(
-            stats_frame, text="Statistics:", font=ctk.CTkFont(size=11, weight="bold")
+            self.stats_frame,
+            text="Statistics:",
+            font=ctk.CTkFont(size=11, weight="bold"),
         ).grid(row=0, column=0, padx=10, pady=(10, 6), sticky="w")
         self.stats_text = ctk.CTkTextbox(
-            stats_frame,
+            self.stats_frame,
             font=ctk.CTkFont(size=11, family="Consolas"),
             fg_color="#1a1a1a",
             corner_radius=6,
@@ -279,21 +409,32 @@ class FileOrganizerApp(ctk.CTk):
         self.stats_text.insert("1.0", "Scan files to see statistics")
         self.stats_text.configure(state="disabled")
         self.monitor_btn = ctk.CTkButton(
-            stats_frame,
+            self.stats_frame,
             text="📡 Start Monitor",
             command=self.toggle_monitor,
             height=36,
             corner_radius=8,
             font=ctk.CTkFont(size=11, weight="bold"),
             fg_color="#2196F3",
+            hover_color="#1976D2",
+            border_width=0,
         )
         self.monitor_btn.grid(row=2, column=0, padx=10, pady=(0, 10), sticky="ew")
 
         # Status label
         self.status_label = ctk.CTkLabel(
-            sidebar, text="Ready", font=ctk.CTkFont(size=11), text_color="#666"
+            self.sidebar_frame,
+            text="Ready",
+            font=ctk.CTkFont(size=11),
+            text_color="#666",
         )
         self.status_label.grid(row=5, column=0, padx=12, pady=(0, 10), sticky="w")
+
+    def _darken(self, hex_color):
+        r = int(hex_color[1:3], 16)
+        g = int(hex_color[3:5], 16)
+        b = int(hex_color[5:7], 16)
+        return f"#{max(0, int(r * 0.85)):02x}{max(0, int(g * 0.85)):02x}{max(0, int(b * 0.85)):02x}"
 
     def select_folder(self):
         folder = filedialog.askdirectory(title="Select Folder to Organize")
@@ -349,10 +490,7 @@ class FileOrganizerApp(ctk.CTk):
             self.file_tree.insert(
                 "",
                 "end",
-                values=(
-                    f["name"],
-                    format_size(f["size"]),
-                ),
+                values=(f["name"], format_size(f["size"])),
                 tags=(f["category"],),
             )
         for c, color in colors.items():
