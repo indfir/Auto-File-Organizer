@@ -54,7 +54,7 @@ Or double-click `run.bat` on Windows.
 
 ## 📸 Screenshots
 
-![File Organizer Screenshot](screenshot.png)
+> 📷 *Screenshots coming soon! Run the app to see the modern dark UI in action.*
 
 ## 📄 License
 
