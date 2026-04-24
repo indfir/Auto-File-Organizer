@@ -7,6 +7,7 @@
 - **🔍 Auto-detect Files** - Scan and detect all files in any folder
 - **🏷️ Smart Categorization** - Auto-sort by type (Images, Documents, Videos, Music, Archives, Code, etc.)
 - **📂 Multiple Organize Modes** - Category, Date, or Extension
+- **🌗 Dark/Light Theme** - Toggle between dark and light mode
 - **👁️ Preview Mode** - See changes before applying
 - **↩️ Undo Support** - Revert last operation anytime
 - **🔎 Duplicate Detection** - Find duplicate files by content hash
